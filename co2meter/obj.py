@@ -2,15 +2,22 @@
 
     (c) Vladimir Filimonov, 2016-2018
     E-mail: vladimir.a.filimonov@gmail.com
+
+    Paul Miller <paul@jettero.pl> later ripped out only the CO2meter object
+    (formerly CO2monitor object) for use in a HEC thingy.
 """
 try:
     import hid
 except AttributeError as e:
-    if 'windll' in e.message:
-        raise ImportError(('Import failed with an error "AttributeError: %s". '
-                           'Possibly there''s a name conflict. Please check if '
-                           'library "hid" is instlled and if so - uninstall it, '
-                           'keeping only "hidapi".' % str(e)))
+    if "windll" in e.message:
+        raise ImportError(
+            (
+                'Import failed with an error "AttributeError: %s". '
+                "Possibly there's a name conflict. Please check if "
+                'library "hid" is installed and if so, uninstall it '
+                '(but keep "hidapi").' % str(e)
+            )
+        )
     else:
         raise
 import datetime as dt
@@ -25,60 +32,54 @@ try:
 except ImportError:
     pd = None
 
-_CO2MON_HID_VENDOR_ID = 0x04d9
-_CO2MON_HID_PRODUCT_ID = 0xa052
-_CO2MON_MAGIC_WORD = b'Htemp99e'
+_CO2MON_HID_VENDOR_ID = 0x04D9
+_CO2MON_HID_PRODUCT_ID = 0xA052
+_CO2MON_MAGIC_WORD = b"Htemp99e"
 _CO2MON_MAGIC_TABLE = (0, 0, 0, 0, 0, 0, 0, 0)
 
 _CODE_END_MESSAGE = 0x0D
 _CODE_CO2 = 0x50
 _CODE_TEMPERATURE = 0x42
 
-_COLORS = {'r': (0.86, 0.37, 0.34),
-           'g': (0.56, 0.86, 0.34),
-           'b': 'b'}
+_COLORS = {"r": (0.86, 0.37, 0.34), "g": (0.56, 0.86, 0.34), "b": "b"}
 
 CO2_HIGH = 1200
 CO2_LOW = 800
 
 
-#############################################################################
 def now():
     return dt.datetime.now().replace(microsecond=0)
 
 
-#############################################################################
 def list_to_longint(x):
     return sum([val << (i * 8) for i, val in enumerate(x[::-1])])
 
 
-#############################################################################
 def longint_to_list(x):
     return [(x >> i) & 0xFF for i in (56, 48, 40, 32, 24, 16, 8, 0)]
 
 
-#############################################################################
 def convert_temperature(val):
     """ Convert temperature from Kelvin (unit of 1/16th K) to Celsius
     """
     return val * 0.0625 - 273.15
 
 
-#############################################################################
-# Class to operate with CO2 monitor
-#############################################################################
-class CO2monitor:
+class CO2meter:
     def __init__(self):
-        """ Initialize the CO2monitor object and retrieve basic HID info.
+        """ Initialize the CO2meter object and retrieve basic HID info.
         """
-        self._info = {'vendor_id': _CO2MON_HID_VENDOR_ID,
-                      'product_id': _CO2MON_HID_PRODUCT_ID}
+        self._info = {
+            "vendor_id": _CO2MON_HID_VENDOR_ID,
+            "product_id": _CO2MON_HID_PRODUCT_ID,
+        }
         self._h = hid.device()
         # Number of requests to open connection
         self._status = 0
 
-        self._magic_word = [((w << 4) & 0xFF) | (w >> 4)
-                            for w in bytearray(_CO2MON_MAGIC_WORD)]
+        self._magic_word = [
+            ((w << 4) & 0xFF) | (w >> 4) for w in bytearray(_CO2MON_MAGIC_WORD)
+        ]
         self._magic_table = _CO2MON_MAGIC_TABLE
         self._magic_table_int = list_to_longint(_CO2MON_MAGIC_TABLE)
 
@@ -93,11 +94,10 @@ class CO2monitor:
 
         # Device info
         with self.co2hid():
-            self._info['manufacturer'] = self._h.get_manufacturer_string()
-            self._info['product_name'] = self._h.get_product_string()
-            self._info['serial_no'] = self._h.get_serial_number_string()
+            self._info["manufacturer"] = self._h.get_manufacturer_string()
+            self._info["product_name"] = self._h.get_product_string()
+            self._info["serial_no"] = self._h.get_serial_number_string()
 
-    #########################################################################
     def hid_open(self, send_magic_table=True):
         """ Open connection to HID device. If connection is already open,
             then only the counter of requests is incremented (so hid_close()
@@ -111,7 +111,7 @@ class CO2monitor:
         """
         if self._status == 0:
             # If connection was not opened before
-            self._h.open(self._info['vendor_id'], self._info['product_id'])
+            self._h.open(self._info["vendor_id"], self._info["product_id"])
             if send_magic_table:
                 self._h.send_feature_report(self._magic_table)
         self._status += 1
@@ -147,7 +147,6 @@ class CO2monitor:
         finally:
             self.hid_close()
 
-    #########################################################################
     @property
     def info(self):
         """ Device info """
@@ -162,7 +161,6 @@ class CO2monitor:
         except:
             return False
 
-    #########################################################################
     def _decrypt(self, message):
         """ Decode message received from CO2 monitor.
         """
@@ -227,7 +225,6 @@ class CO2monitor:
                 break
         return now(), co2, temp
 
-    #########################################################################
     def read_data_raw(self, max_requests=50):
         with self.co2hid(send_magic_table=True):
             vals = self._read_co2_temp(max_requests=max_requests)
@@ -258,11 +255,9 @@ class CO2monitor:
             vals = self.read_data_raw(max_requests=max_requests)
             # If pandas is available - return pandas.DataFrame
             if pd is not None:
-                vals = pd.DataFrame({'co2': vals[1], 'temp': vals[2]},
-                                    index=[vals[0]])
+                vals = pd.DataFrame({"co2": vals[1], "temp": vals[2]}, index=[vals[0]])
             return vals
 
-    #########################################################################
     def _monitoring(self):
         """ Private function for continuous monitoring.
         """
@@ -272,8 +267,9 @@ class CO2monitor:
                 if pd is None:
                     self._data.append(vals)
                 else:
-                    vals = pd.DataFrame({'co2': vals[1], 'temp': vals[2]},
-                                        index=[vals[0]])
+                    vals = pd.DataFrame(
+                        {"co2": vals[1], "temp": vals[2]}, index=[vals[0]]
+                    )
                     self._data = self._data.append(vals)
                 time.sleep(self._interval)
 
@@ -301,7 +297,6 @@ class CO2monitor:
         """
         self._keep_monitoring = False
 
-    #########################################################################
     @property
     def data(self):
         """ All data retrieved with continuous monitoring
@@ -321,113 +316,15 @@ class CO2monitor:
                 Filename
         """
         if pd is None:
-            raise NotImplementedError('Logging to CSV is implemented '
-                                      'using pandas package only (so far)')
+            raise NotImplementedError(
+                "Logging to CSV is implemented " "using pandas package only (so far)"
+            )
         if os.path.isfile(fname):
             # Check the last line to get the timestamp of the last record
             df = pd.read_csv(fname)
             last = pd.Timestamp(df.iloc[-1, 0])
             # Append only new data
-            with open(fname, 'a') as f:
+            with open(fname, "a") as f:
                 self._data[self._data.index > last].to_csv(f, header=False)
         else:
             self._data.to_csv(fname)
-
-
-#############################################################################
-def read_csv(fname):
-    """ Read data from CSV file.
-
-        Parameters
-        ----------
-        fname : string
-            Filename
-    """
-    if pd is None:
-        raise NotImplementedError('Reading CSV files is implemented '
-                                  'using pandas package only (so far)')
-    return pd.read_csv(fname, index_col=0, parse_dates=0)
-
-
-#############################################################################
-def plot(data, plot_temp=False, ewma_halflife=30., **kwargs):
-    """ Plot recorded data
-
-        Parameters
-        ----------
-        data : pandas.DataFrame
-            Data indexed by timestamps. Should have columns 'co2' and 'temp'
-        plot_temp : bool
-            If True temperature will be also plotted
-        ewma_halflife : float
-            If specified (not None) data will be smoothed using EWMA
-    """
-    global plt
-    if plt is None:
-        import matplotlib.pyplot as _plt
-        plt = _plt
-
-    if pd is None:
-        raise NotImplementedError('Plotting is implemented so far '
-                                  'using pandas package only')
-
-    # DataFrames
-    if (ewma_halflife is not None) and (ewma_halflife > 0):
-        halflife = pd.Timedelta(ewma_halflife, 's') / pd.np.mean(pd.np.diff(data.index))
-        co2 = pd.ewma(data.co2, halflife=halflife, min_periods=0)
-        temp = pd.ewma(data.temp, halflife=2 * halflife, min_periods=0)
-    else:
-        co2 = data.co2
-        temp = data.temp
-
-    co2_r = co2.copy()
-    co2_g = co2.copy()
-    co2_r[co2_r <= CO2_HIGH] = pd.np.NaN
-    co2_g[co2_g >= CO2_LOW] = pd.np.NaN
-
-    # Plotting
-    ax = kwargs.pop('ax', plt.gca())
-
-    ax.fill_between(co2_r.index, co2_r.values, CO2_HIGH,
-                    alpha=0.5, color=_COLORS['r'])
-    ax.fill_between(co2_g.index, co2_g.values, CO2_LOW,
-                    alpha=0.5, color=_COLORS['g'])
-
-    ax.axhline(CO2_LOW, color=_COLORS['g'], lw=2, ls='--')
-    ax.axhline(CO2_HIGH, color=_COLORS['r'], lw=2, ls='--')
-
-    ax.plot(co2.index, co2.values, lw=2, color='k')
-
-    yl = ax.get_ylim()
-    ax.set_ylim([min(600, yl[0]), max(1400, yl[1])])
-    ax.set_ylabel('CO2 concentration, ppm')
-    plt.setp(ax.xaxis.get_majorticklabels(), rotation=0,
-             horizontalalignment='center')
-
-    if plot_temp:
-        ax2 = ax.twinx()
-        ax2.plot(temp.index, temp.values, color=_COLORS['b'])
-        ax2.set_ylabel('Temperature, C')
-        yl = ax2.get_ylim()
-        ax2.set_ylim([min(19, yl[0]), max(23, yl[1])])
-        ax2.grid('off')
-
-    plt.tight_layout()
-
-
-#############################################################################
-# Entry points
-#############################################################################
-def start_homekit():
-    from .homekit import start_homekit as start
-    start()
-
-
-def start_server():
-    from .server import start_server as start
-    start()
-
-
-def start_server_homekit():
-    from .server import start_server_homekit as start
-    start()

@@ -1,4 +1,0 @@
-recursive-include co2meter/templates *
-recursive-include co2meter/static *
-include README.md
-include LICENSE.txt

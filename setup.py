@@ -1,33 +1,44 @@
-from setuptools import setup
+#!/usr/bin/env python3
 
-GITHUB_URL = 'http://github.com/vfilimonov/co2meter'
+import sys
+from setuptools import setup, find_packages
+from setuptools.command.test import test as TestCommand
 
-exec(open('co2meter/_version.py').read())
+try:
+    from sphinx.setup_command import BuildDoc
+except ModuleNotFoundError:
+    BuildDoc = None
 
-# Long description to be published in PyPi
-LONG_DESCRIPTION = """
-**CO2meter** is a Python interface to the USB CO2 monitor with monitoring and
-logging tools, flask web-server for visualization and Apple HomeKit compatibility.
-"""
 
-setup(name='CO2meter',
-      version=__version__,
-      description='Python interface to the USB CO2 monitor',
-      long_description=LONG_DESCRIPTION,
-      url=GITHUB_URL,
-      download_url=GITHUB_URL + '/archive/v%s.zip' % (__version__),
-      author='Vladimir Filimonov',
-      author_email='vladimir.a.filimonov@gmail.com',
-      license='MIT License',
-      packages=['co2meter'],
-      install_requires=['hidapi', 'future'],
-      include_package_data=True,
-      zip_safe=False,
-      entry_points={
-          'console_scripts': ['co2meter_server = co2meter:start_server',
-                              'co2meter_homekit = co2meter:start_homekit',
-                              'co2meter_server_homekit = co2meter:start_server_homekit',
-                              ],
-      },
-      classifiers=['Programming Language :: Python :: 3', ]
-      )
+class PyTest(TestCommand):
+    user_options = [("pytest-args=", "a", "Arguments to pass to pytest")]
+
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.pytest_args = ""
+
+    def run_tests(self):
+        import shlex
+        import pytest
+
+        errno = pytest.main(shlex.split(self.pytest_args))
+        sys.exit(errno)
+
+
+setup(
+    name="jco2meter",
+    description="CO2monitor vfilimonov/co2meter converted to Splunk HEC gizmo",
+    author="Paul Miller",
+    author_email="paul@jettero.pl",
+    url="https://github.com/jettero/co2meter",
+    packages=find_packages(),
+    cmdclass={"test": PyTest},
+    tests_require=["pytest"],
+    setup_requires=["setuptools_scm"],
+    use_scm_version={
+        "write_to": "co2meter/__version__.py",
+        # NOTE: use ./setup.py --version to regenerate version.py and print the
+        # computed version
+    },
+    entry_points={"console_scripts": ["jco2meter = jco2meter.cmd:run",],},
+)
