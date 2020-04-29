@@ -4,7 +4,7 @@
     E-mail: vladimir.a.filimonov@gmail.com
 
     Paul Miller <paul@jettero.pl> later ripped out only the CO2meter object
-    (formerly CO2monitor object) for use in a HEC thingy.
+    (formerly CO2monitor object) for use in my simple json spitter
 """
 try:
     import hid

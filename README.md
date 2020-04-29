@@ -9,5 +9,5 @@ https://github.com/vfilimonov/co2meter
 
 # My actual contribution
 
-I just made a HEC object for forwarding to splunk where I do all that server and
-plotting stuff.
+I just wanted a tool to spit out json. I can import that into Splunk or whatever
+and make graphs in there.

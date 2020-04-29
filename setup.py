@@ -4,12 +4,6 @@ import sys
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
-try:
-    from sphinx.setup_command import BuildDoc
-except ModuleNotFoundError:
-    BuildDoc = None
-
-
 class PyTest(TestCommand):
     user_options = [("pytest-args=", "a", "Arguments to pass to pytest")]
 
@@ -27,12 +21,13 @@ class PyTest(TestCommand):
 
 setup(
     name="jco2meter",
-    description="CO2monitor vfilimonov/co2meter converted to Splunk HEC gizmo",
+    description="CO2monitor vfilimonov/co2meter converted to simple json spitter",
     author="Paul Miller",
     author_email="paul@jettero.pl",
     url="https://github.com/jettero/co2meter",
     packages=find_packages(),
     cmdclass={"test": PyTest},
+    build_requires=["simplejson", "hidapi", "click"],
     tests_require=["pytest"],
     setup_requires=["setuptools_scm"],
     use_scm_version={
