@@ -1,4 +1,6 @@
-co2meter/__pycache__/
+__pycache__
 *.pyc
 *.csv
-accessory.state
+/build
+/*.egg*
+/co2meter/__version__.py
