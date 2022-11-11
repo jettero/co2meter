@@ -1,6 +1,14 @@
+
+# don't track this stuff by mistake
+file[0-9]*
+wtf*
+*.csv
+
+# known generated files
+/jco2meter/version.py
+
+# basic python stuff
 __pycache__
 *.pyc
-*.csv
 /*.egg*
 /dist
-/jco2meter/version.py

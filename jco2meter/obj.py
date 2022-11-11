@@ -69,20 +69,11 @@ class CO2meter:
     def __init__(self, vid=_CO2MON_HID_VENDOR_ID, pid=_CO2MON_HID_PRODUCT_ID, path=None, serial=None):
         """ Initialize the CO2meter object and retrieve basic HID info.
         """
-
         self._info = {
-            "vendor_id": vid,
-            "product_id": pid,
-            "path": path,
-            "serial": serial,
+            "vendor_id": _CO2MON_HID_VENDOR_ID,
+            "product_id": _CO2MON_HID_PRODUCT_ID,
         }
-
-        self._h = hid.Device(vid=vid, pid=pid, path=path, serial=serial)
-
-        self._info['serial'] = self._h.serial
-        self._info['product'] = self._h.product
-        self._info['manufacturer'] = self._h.manufacturer
-
+        self._h = hid.device()
         # Number of requests to open connection
         self._status = 0
 
@@ -106,6 +97,7 @@ class CO2meter:
             self._info["manufacturer"] = self._h.get_manufacturer_string()
             self._info["product_name"] = self._h.get_product_string()
             self._info["serial_no"] = self._h.get_serial_number_string()
+
 
     def hid_open(self, send_magic_table=True):
         """ Open connection to HID device. If connection is already open,
