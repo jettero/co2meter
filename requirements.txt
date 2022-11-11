@@ -1,0 +1,3 @@
+simplejson
+hidapi
+click

@@ -4,7 +4,7 @@ import click
 import simplejson as json
 import time
 
-from co2meter.obj import CO2meter
+from jco2meter.obj import CO2meter
 
 DT_FORMAT = '%Y-%m-%d %H:%M:%S %Z'
 
@@ -31,7 +31,7 @@ class MeterOutput:
 @click.option('-j', '--json', is_flag=True, default=False)
 @click.option('-c', '--continuous', is_flag=True, default=False)
 @click.option('-f', '--frequency', type=int, default=60)
-def co2meter(json, continuous, frequency):
+def jco2meter(json, continuous, frequency):
     if frequency < 10:
         print("NOTE: it can take 3-5 seconds to get a reading from the instrument,\n"
             f"      so -f {frequency} may be a little aggressive.")
@@ -53,4 +53,4 @@ def co2meter(json, continuous, frequency):
             time.sleep(0.3)
 
 def run():
-    co2meter()
+    jco2meter()
