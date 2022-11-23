@@ -2,3 +2,4 @@ simplejson
 hidapi
 click
 pyyaml
+hidapi
