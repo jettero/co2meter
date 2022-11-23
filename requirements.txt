@@ -1,3 +1,4 @@
 simplejson
 hidapi
 click
+pyyaml
